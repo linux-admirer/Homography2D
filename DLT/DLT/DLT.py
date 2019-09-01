@@ -7,7 +7,7 @@ def computeCentroid(points):
     centroid = pointSum / dim
     return centroid
 
-def averageDistance(points):
+def averageDistance2D(points):
     distancePoints = [np.sqrt(np.square(point[0]) + np.square(point[1])) for point in points]
     distance = np.sum(distancePoints)
     return (distance/points.shape[0])
@@ -16,7 +16,7 @@ def normalizePoints2D(points):
     centroid = computeCentroid(points)
 
     # Average distance of points from origin must be sqrt(2)
-    avgDistance = averageDistance(points)
+    avgDistance = averageDistance2D(points)
     scale = np.sqrt(2) / avgDistance
 
     transformation = np.identity(3)
@@ -58,7 +58,7 @@ def compute2DDLTMatrixHomogeneous(fromPoints, toPoints):
         A[rowIndex] = row2
         rowIndex = rowIndex + 1
 
-    # computation of U can be optimized using bidiagonilization SVD
+    # TODO: computation of U can be optimized using bidiagonilization SVD
     U, S, VT = np.linalg.svd(A, full_matrices=True)
 
     minIndex = np.where(S == np.amin(S))[0]
@@ -77,7 +77,7 @@ def estimateScaleNormalized(fromPoints, transformation):
     estimatedPoints = np.zeros(shape = fromPoints.shape)
 
     estimatedPoints = np.asarray([np.matmul(transformation, point) for point in fromPoints])
-    avgEstDist = averageDistance(estimatedPoints)
+    avgEstDist = averageDistance2D(estimatedPoints)
     
     # fromPoints are normalized such that the average distance from origin is sqrt(2).
     # The estimated points must be scaled such that average distance is also sqrt(2)
@@ -91,10 +91,11 @@ def computeDLTTransformation(fromPoints, toPoints):
     error, H = compute2DDLTMatrixHomogeneous(fromPointsNormalized, toPointsNormalized)
     print("Algebraic error = %s" %error)
 
-    # DLT transformation is done only upto scale. Scale must be calculated separately.
-    scaleEstimated = estimateScaleNormalized(fromPointsNormalized, H)
-    H = H * scaleEstimated
-    return H
+    transformationOrig = np.matmul(np.linalg.inv(toTransformation), H)
+    transformationOrig = np.matmul(transformationOrig, fromTransformation)
+    transformationOrig /= transformationOrig[2,2]
+
+    return transformationOrig
 
 if __name__ == "__main__":
     points = np.array([[1, 1, 1], [1, -1, 1], [-1, -1 , 1], [-1, 1, 1]])
