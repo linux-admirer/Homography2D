@@ -8,26 +8,24 @@ def computeCentroid(points):
     return centroid
 
 def averageDistance(points):
-    points = np.square(points)
-    sum = np.sum(points, axis=1)
-    distancePoints = np.sqrt(sum)
+    distancePoints = [np.sqrt(np.square(point[0]) + np.square(point[1])) for point in points]
     distance = np.sum(distancePoints)
     return (distance/points.shape[0])
 
-def scaleFactor(points):
-    avgDistance = averageDistance(points)
-    return np.sqrt(2) / avgDistance
-
-def normalizePoints(points):
+def normalizePoints2D(points):
     centroid = computeCentroid(points)
-    # Translate points
-    translatedPoints = np.subtract(points, centroid)
 
     # Average distance of points from origin must be sqrt(2)
     avgDistance = averageDistance(points)
     scale = np.sqrt(2) / avgDistance
-    scaledPoints = np.multiply(points, scale)
-    return scaledPoints
+
+    transformation = np.identity(3)
+    transformation = np.multiply(transformation, scale)
+    transformation[:, 2] = -centroid
+    transformation[2,2] = 1
+
+    transformedPoints = [np.dot(transformation, np.transpose(point)) for point in points]
+    return (transformation, np.asarray(transformedPoints))
 
 def compute2DDLTMatrixHomogeneous(fromPoints, toPoints):
     if not fromPoints.shape[1] == 3 or not toPoints.shape[1] == 3:
@@ -77,11 +75,8 @@ def compute2DDLTMatrixHomogeneous(fromPoints, toPoints):
 
 def estimateScaleNormalized(fromPoints, transformation):
     estimatedPoints = np.zeros(shape = fromPoints.shape)
-    index = 0
-    for point in fromPoints:
-        estimatedPoints[index] = np.matmul(transformation, point)
-        index = index + 1
 
+    estimatedPoints = np.asarray([np.matmul(transformation, point) for point in fromPoints])
     avgEstDist = averageDistance(estimatedPoints)
     
     # fromPoints are normalized such that the average distance from origin is sqrt(2).
@@ -90,8 +85,8 @@ def estimateScaleNormalized(fromPoints, transformation):
 
 
 def computeDLTTransformation(fromPoints, toPoints):
-    fromPointsNormalized = normalizePoints(fromPoints)
-    toPointsNormalized = normalizePoints(toPoints)
+    fromTransformation, fromPointsNormalized = normalizePoints2D(fromPoints)
+    toTransformation, toPointsNormalized = normalizePoints2D(toPoints)
 
     error, H = compute2DDLTMatrixHomogeneous(fromPointsNormalized, toPointsNormalized)
     print("Algebraic error = %s" %error)
@@ -104,4 +99,3 @@ def computeDLTTransformation(fromPoints, toPoints):
 if __name__ == "__main__":
     points = np.array([[1, 1, 1], [1, -1, 1], [-1, -1 , 1], [-1, 1, 1]])
     computeDLTTransformation(points, points)
-
