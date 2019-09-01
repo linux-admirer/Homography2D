@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29123.88
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "DLT", "DLT\DLT.pyproj", "{ACAEB72B-2117-40A3-8206-2E6349369576}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "unittests", "unittests\unittests.pyproj", "{7C0E2F44-6C4A-44AF-82A3-A4498FBEA0FA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ACAEB72B-2117-40A3-8206-2E6349369576}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACAEB72B-2117-40A3-8206-2E6349369576}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C0E2F44-6C4A-44AF-82A3-A4498FBEA0FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C0E2F44-6C4A-44AF-82A3-A4498FBEA0FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C3D45C13-9203-42EC-8749-5B4E279EC4AE}
+	EndGlobalSection
+EndGlobal
