@@ -60,6 +60,10 @@ def compute2DDLTMatrixHomogeneous(fromPoints, toPoints):
 
     # TODO: computation of U can be optimized using bidiagonilization SVD
     U, S, VT = np.linalg.svd(A, full_matrices=True)
+    zeroIndices = np.where(S <= 1e-8)[0]
+    if len(zeroIndices) > 1:
+        raise Exception("Given data contain collinear points."
+                       " Not a unique solution if the dimension of null space is greater than 1")
 
     minIndex = np.where(S == np.amin(S))[0]
     # if only 4 point correspondences are given, there will only be 8 singular values.
@@ -83,19 +87,17 @@ def estimateScaleNormalized(fromPoints, transformation):
     # The estimated points must be scaled such that average distance is also sqrt(2)
     return np.sqrt(2) / avgEstDist
 
-
 def computeDLTTransformation(fromPoints, toPoints):
     fromTransformation, fromPointsNormalized = normalizePoints2D(fromPoints)
     toTransformation, toPointsNormalized = normalizePoints2D(toPoints)
 
     error, H = compute2DDLTMatrixHomogeneous(fromPointsNormalized, toPointsNormalized)
-    print("Algebraic error = %s" %error)
 
     transformationOrig = np.matmul(np.linalg.inv(toTransformation), H)
     transformationOrig = np.matmul(transformationOrig, fromTransformation)
     transformationOrig /= transformationOrig[2,2]
 
-    return transformationOrig
+    return (error, transformationOrig)
 
 if __name__ == "__main__":
     points = np.array([[1, 1, 1], [1, -1, 1], [-1, -1 , 1], [-1, 1, 1]])
