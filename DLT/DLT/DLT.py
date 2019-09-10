@@ -12,19 +12,31 @@ def averageDistance2D(points):
     distance = np.sum(distancePoints)
     return (distance/points.shape[0])
 
-def normalizePoints2D(points):
-    centroid = computeCentroid(points)
+def averageDistance3D(points):
+    distancePoints = np.sqrt(np.sum(np.square(points), axis = 0))
+    distance = np.sum(distancePoints)
+    return (distance/points.shape[0])
 
+def normalizePoints2D(points):
+    w_components = points[:, 2]
+    points[:, 0] = np.divide(points[:, 0], w_components)
+    points[:, 1] = np.divide(points[:, 1], w_components)
+    points[:, 2] = np.divide(points[:, 2], w_components)
+
+    centroid = computeCentroid(points)
+    centroid[2] = 0
+    pointsNew = points - centroid
     # Average distance of points from origin must be sqrt(2)
-    avgDistance = averageDistance2D(points)
+    avgDistance = averageDistance2D(pointsNew)
     scale = np.sqrt(2) / avgDistance
 
     transformation = np.identity(3)
     transformation = np.multiply(transformation, scale)
-    transformation[:, 2] = -centroid
+    transformation[:, 2] = -centroid * scale
     transformation[2,2] = 1
 
-    transformedPoints = [np.dot(transformation, np.transpose(point)) for point in points]
+    transformedPoints = [np.matmul(transformation, np.transpose(point)) for point in points]
+
     return (transformation, np.asarray(transformedPoints))
 
 def compute2DDLTMatrixHomogeneous(fromPoints, toPoints):
@@ -93,8 +105,8 @@ def computeDLTTransformation(fromPoints, toPoints):
 
     error, H = compute2DDLTMatrixHomogeneous(fromPointsNormalized, toPointsNormalized)
 
-    transformationOrig = np.matmul(np.linalg.inv(toTransformation), H)
-    transformationOrig = np.matmul(transformationOrig, fromTransformation)
+    transformationOrig = np.matmul(H, fromTransformation)
+    transformationOrig = np.matmul(np.linalg.inv(toTransformation), transformationOrig)
     transformationOrig /= transformationOrig[2,2]
 
     return (error, transformationOrig)
