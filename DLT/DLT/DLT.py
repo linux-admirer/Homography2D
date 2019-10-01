@@ -17,12 +17,7 @@ def averageDistance3D(points):
     distance = np.sum(distancePoints)
     return (distance/points.shape[0])
 
-def normalizePoints2D(points):
-    w_components = points[:, 2]
-    points[:, 0] = np.divide(points[:, 0], w_components)
-    points[:, 1] = np.divide(points[:, 1], w_components)
-    points[:, 2] = np.divide(points[:, 2], w_components)
-
+def _computeSimilarityTransformation(points):
     centroid = computeCentroid(points)
     centroid[2] = 0
     pointsNew = points - centroid
@@ -34,12 +29,25 @@ def normalizePoints2D(points):
     transformation = np.multiply(transformation, scale)
     transformation[:, 2] = -centroid * scale
     transformation[2,2] = 1
+    return transformation
+
+def _homogenizePoints(points):
+    w_components = points[:, 2]
+    points[:, 0] = np.divide(points[:, 0], w_components)
+    points[:, 1] = np.divide(points[:, 1], w_components)
+    points[:, 2] = np.divide(points[:, 2], w_components)
+    return points
+
+def _normalizePoints2D(points):
+    points = _homogenizePoints(points)
+
+    transformation = _computeSimilarityTransformation(points)
 
     transformedPoints = [np.matmul(transformation, np.transpose(point)) for point in points]
 
     return (transformation, np.asarray(transformedPoints))
 
-def compute2DDLTMatrixHomogeneous(fromPoints, toPoints):
+def matrixFromCorrespondences(fromPoints, toPoints):
     if not fromPoints.shape[1] == 3 or not toPoints.shape[1] == 3:
         raise Exception("Points must of 3 dimensions")
 
@@ -70,6 +78,11 @@ def compute2DDLTMatrixHomogeneous(fromPoints, toPoints):
         A[rowIndex] = row2
         rowIndex = rowIndex + 1
 
+    return A
+
+def _compute2DDLTMatrixHomogeneous(fromPoints, toPoints):
+    A = matrixFromCorrespondences(fromPoints, toPoints)
+
     # TODO: computation of U can be optimized using bidiagonilization SVD
     U, S, VT = np.linalg.svd(A, full_matrices=True)
     zeroIndices = np.where(S <= 1e-8)[0]
@@ -85,25 +98,14 @@ def compute2DDLTMatrixHomogeneous(fromPoints, toPoints):
     h = VT[minIndex]
 
     algError = np.matmul(A, np.transpose(h))
-    algErrpr = np.square(algError)
-    algError = np.sum(algError)
+    algError = np.sum(np.square(algError))
     return (algError, np.reshape(h, (3,3)))
 
-def estimateScaleNormalized(fromPoints, transformation):
-    estimatedPoints = np.zeros(shape = fromPoints.shape)
-
-    estimatedPoints = np.asarray([np.matmul(transformation, point) for point in fromPoints])
-    avgEstDist = averageDistance2D(estimatedPoints)
-    
-    # fromPoints are normalized such that the average distance from origin is sqrt(2).
-    # The estimated points must be scaled such that average distance is also sqrt(2)
-    return np.sqrt(2) / avgEstDist
-
 def computeDLTTransformation(fromPoints, toPoints):
-    fromTransformation, fromPointsNormalized = normalizePoints2D(fromPoints)
-    toTransformation, toPointsNormalized = normalizePoints2D(toPoints)
+    fromTransformation, fromPointsNormalized = _normalizePoints2D(fromPoints)
+    toTransformation, toPointsNormalized = _normalizePoints2D(toPoints)
 
-    error, H = compute2DDLTMatrixHomogeneous(fromPointsNormalized, toPointsNormalized)
+    error, H = _compute2DDLTMatrixHomogeneous(fromPointsNormalized, toPointsNormalized)
 
     transformationOrig = np.matmul(H, fromTransformation)
     transformationOrig = np.matmul(np.linalg.inv(toTransformation), transformationOrig)
