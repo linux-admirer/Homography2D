@@ -26,16 +26,16 @@ def iterativeMinimization_LMA(fromPoints, toPoints, maxIterations, errorThreshol
     A = DLT.matrixFromCorrespondences(fromPoints, toPoints)
     h = DLTTransformation.flatten()
 
-    errVec, jacobian = computeJacobian(computeErrorVector, A, h, 1e-10)
-
     # initial value recommended: 1e-3
     lamda = 1e-3
     lamdaFactor = 2
 
-    normErr = frobeniusNorm2(errVec)
+    normErr = None
 
     numofIterations = maxIterations
     while numofIterations > 0:
+        errVec, jacobian = computeJacobian(computeErrorVector, A, h, 1e-10)
+        normErr = frobeniusNorm2(errVec)
         if normErr < errorThreshold:
             break
 
@@ -51,9 +51,7 @@ def iterativeMinimization_LMA(fromPoints, toPoints, maxIterations, errorThreshol
 
         if normErrNew <= normErr:
             lamda /= lamdaFactor
-            normErr = normErrNew
             h = hNew
-            errVec = errVecNew
         else:
             lamda *= lamdaFactor
 
